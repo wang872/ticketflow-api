@@ -53,20 +53,6 @@ resolved → in_progress（重开）
 
 每次创建工单、状态变更、指派、认领、评论、SLA 违约均记录 `actor_id`、`action`、`ticket_id`、`extra`（JSON）。Admin 通过 `GET /admin/audit` 分页查询。
 
-## 简历写法
-
-**中文（3–4 条）**
-
-- 基于 FastAPI + SQLAlchemy 2 实现工单系统后端，覆盖 RBAC 三角色权限、有限状态机流转、SLA 超时检测与全链路审计日志。
-- 使用 JWT 鉴权与按角色数据隔离，内部评论对客户不可见，客户访问他人工单返回 404 防止枚举。
-- 进程内 daemon 线程周期性扫描 SLA 到期工单，自动标记违约并写入审计，默认 SQLite 无需 Redis/Celery/PostgreSQL。
-- 提供认领/指派、状态机校验、分页查询及 pytest 集成测试，覆盖注册登录、越权、FSM 409、内部评论隔离等场景。
-
-**English**
-
-- Built a FastAPI helpdesk backend with RBAC, a ticket finite-state machine, SLA breach detection, and immutable audit trails.
-- Implemented JWT authentication with role-based data isolation; internal comments are hidden from customers and cross-user access returns 404.
-- Added an in-process SLA scanner (daemon thread) that flags overdue tickets and records audit events on SQLite with zero external dependencies.
 
 ## 本地运行
 
@@ -159,14 +145,7 @@ ticketflow-api/
     └── test_api.py
 ```
 
-## 面试可讲点
 
-1. **状态机设计**：合法转移表 `TRANSITIONS` 集中定义，服务层统一校验；认领/指派与状态变更分离，避免绕过指派流程。
-2. **越权防护**：JWT 只证明身份，每个接口二次校验角色；customer 对他人工单 404 而非 403，防止工单 ID 枚举。
-3. **内部评论隔离**：写入时 RBAC 拦截，读取时按角色过滤，双层防护。
-4. **SLA 扫描**：daemon 线程 + 可测试的 `scan_overdue_tickets()` 纯函数，测试环境关闭线程直接调用。
-5. **审计不可变**：append-only 日志，`extra` JSON 存上下文，admin 分页查询构成完整处理链。
-6. **密码安全**：PBKDF2-HMAC-SHA256 + 随机 salt，不引入 passlib 依赖。
 
 ## 配置
 
